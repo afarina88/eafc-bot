@@ -8,12 +8,19 @@ let cache = null;
 
 async function fetchStats() {
   try {
+    console.log("Fetching stats...");
+
     const browser = await puppeteer.launch({
       headless: "new",
-      args: ["--no-sandbox"]
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
 
     const page = await browser.newPage();
+
+    // 👇 fondamentale per evitare blocchi
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
+    );
 
     await page.goto("https://www.ea.com/", {
       waitUntil: "networkidle2"
@@ -37,10 +44,10 @@ async function fetchStats() {
       updated: new Date().toISOString()
     };
 
-    console.log("UPDATED:", cache);
+    console.log("✅ UPDATED:", cache);
 
   } catch (err) {
-    console.error("ERROR:", err.message);
+    console.error("❌ ERROR:", err);
   }
 }
 
