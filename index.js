@@ -1,4 +1,5 @@
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import express from "express";
 
 const app = express();
@@ -10,16 +11,18 @@ async function fetchStats() {
   try {
     console.log("Fetching stats...");
 
+    const executablePath = await chromium.executablePath();
+
     const browser = await puppeteer.launch({
-      headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+      args: chromium.args,
+      executablePath, // 🔥 QUESTO È FONDAMENTALE
+      headless: chromium.headless
     });
 
     const page = await browser.newPage();
 
-    // 👇 fondamentale per evitare blocchi
     await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     );
 
     await page.goto("https://www.ea.com/", {
@@ -51,18 +54,16 @@ async function fetchStats() {
   }
 }
 
-// aggiorna ogni 10 minuti
+// ogni 10 min
 setInterval(fetchStats, 10 * 60 * 1000);
 
-// prima esecuzione
+// primo run
 fetchStats();
 
-// API endpoint
 app.get("/stats", (req, res) => {
   if (!cache) return res.json({ loading: true });
   res.json(cache);
 });
 
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => console.log("Server running on", PORT));
+app.listen(PORT, () => console.log("Server running"));
