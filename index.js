@@ -29,12 +29,28 @@ async function fetchStats() {
       waitUntil: "networkidle2"
     });
 
-    const data = await page.evaluate(async (clubId) => {
-      const res = await fetch(
-        `https://proclubs.ea.com/api/fc/clubs/overallStats?platform=common-gen5&clubIds=${clubId}`
-      );
-      return res.json();
-    }, CLUB_ID);
+    let data = null;
+
+    page.on("response", async (response) => {
+    const url = response.url();
+
+    if (url.includes("overallStats")) {
+        try {
+        data = await response.json();
+        console.log("✅ INTERCEPTED DATA");
+        } catch (e) {
+        console.log("Parse error");
+        }
+    }
+    });
+
+    // 👇 apri pagina EA clubs (IMPORTANTE)
+    await page.goto("https://www.ea.com/games/ea-sports-fc/clubs/overview", {
+    waitUntil: "networkidle2"
+    });
+
+    // 👇 aspetta un attimo per intercettare
+    await new Promise(r => setTimeout(r, 8000));
 
     await browser.close();
 
